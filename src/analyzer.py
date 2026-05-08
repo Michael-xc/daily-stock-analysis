@@ -17,11 +17,34 @@ import time
 from dataclasses import dataclass
 from typing import Optional, Dict, Any, List, Tuple, Callable
 
-import litellm
-from json_repair import repair_json
-from litellm import Router
+import requests
+import os
+import json
 
-from src.agent.llm_adapter import get_thinking_extra_body
+def get_analysis_response(prompt: str, system_prompt: str) -> str:
+    \"\"\"直接调用 SiliconCloud API，绕过 LiteLLM\"\"\"
+    api_key = os.getenv(\"DEEPSEEK_API_KEY\")
+    base_url = os.getenv(\"OPENAI_BASE_URL\", \"https://api.siliconflow.cn/v1/\").rstrip(\"/\")
+    model = \"deepseek-chat\"
+    
+    url = f\"{base_url}/chat/completions\"
+    headers = {
+        \"Authorization\": f\"Bearer {api_key}\",
+        \"Content-Type\": \"application/json\"
+    }
+    payload = {
+        \"model\": model,
+        \"messages\": [
+            {\"role\": \"system\", \"content\": system_prompt},
+            {\"role\": \"user\", \"content\": prompt}
+        ],
+        \"temperature\": 0.7
+    }
+    
+    response = requests.post(url, headers=headers, json=payload, timeout=60)
+    response.raise_for_status()
+    return response.json()[\"choices\"][0][\"message\"][\"content\"]
+
 from src.agent.skills.defaults import CORE_TRADING_SKILL_POLICY_ZH
 from src.config import (
     Config,
@@ -1252,15 +1275,9 @@ class GeminiAnalyzer:
             Response text, or None if the LLM call fails (error is logged).
         """
         try:
-            result = self._call_litellm(
-                prompt,
-                generation_config={"max_tokens": max_tokens, "temperature": temperature},
-            )
-            if isinstance(result, tuple):
-                text, model_used, usage = result
-                persist_llm_usage(usage, model_used, call_type="market_review")
-                return text
-            return result
+            # 使用新的 get_analysis_response 调用
+            text = get_analysis_response(prompt, self.TEXT_SYSTEM_PROMPT)
+            return text
         except Exception as exc:
             logger.error("[generate_text] LLM call failed: %s", exc)
             return None
