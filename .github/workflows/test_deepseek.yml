@@ -1,0 +1,33 @@
+name: Test DeepSeek API
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test API
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          python3 -c "
+          import os
+          import requests
+          
+          key = os.getenv('DEEPSEEK_API_KEY')
+          url = 'https://api.deepseek.com/chat/completions'
+          headers = {
+              'Authorization': f'Bearer {key}',
+              'Content-Type': 'application/json'
+          }
+          data = {
+              'model': 'deepseek-chat',
+              'messages': [{'role': 'user', 'content': 'Hello'}]
+          }
+          try:
+              response = requests.post(url, json=data, headers=headers, timeout=10)
+              print(f'Status: {response.status_code}')
+              print(f'Body: {response.text}')
+          except Exception as e:
+              print(f'Error: {e}')
+          "
