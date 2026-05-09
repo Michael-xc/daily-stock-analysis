@@ -22,8 +22,8 @@ import os
 def get_analysis_response(prompt: str, system_prompt: str) -> str:
     """直接调用 SiliconCloud API，绕过 LiteLLM"""
     api_key = os.getenv("DEEPSEEK_API_KEY")
-    base_url = os.getenv("OPENAI_BASE_URL", "https://api.siliconflow.cn/v1/").rstrip("/")
-    model = "deepseek-chat"
+    base_url = "https://api.siliconflow.cn/v1"
+    model = "deepseek-ai/DeepSeek-V3" # SiliconCloud推荐的高性能模型
     
     url = f"{base_url}/chat/completions"
     headers = {
