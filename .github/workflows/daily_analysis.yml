@@ -47,6 +47,10 @@ jobs:
       - name: Run setup
         run: mkdir -p data logs reports
       
+      - name: Extreme Debug
+        run: |
+          python debug_pipeline.py
+      
       - name: Configure environment
         env:
           LITELLM_MODEL: ${{ vars.LITELLM_MODEL || secrets.LITELLM_MODEL }}
