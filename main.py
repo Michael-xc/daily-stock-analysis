@@ -428,12 +428,15 @@ def run_full_analysis(
         if os.getenv("GITHUB_ACTIONS") == "true":
             args.force_run = True
             
-        filtered_codes, effective_region, should_skip = _compute_trading_day_filter(
-            config, args, effective_codes
-        )
-        if should_skip:
-            logger.info("今日所有相关市场均为非交易日，跳过执行。")
-            return
+    # Advisor 暴力重构：绕过所有过滤逻辑，强制进入执行流
+    # if should_skip:
+    #    logger.info("今日所有相关市场均为非交易日，跳过执行。")
+    #    return
+    
+    # 直接强制执行
+    filtered_codes = effective_codes
+    effective_region = None
+    should_skip = False
         if set(filtered_codes) != set(effective_codes):
             skipped = set(effective_codes) - set(filtered_codes)
             logger.info("今日休市股票已跳过: %s", skipped)
