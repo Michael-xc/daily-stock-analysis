@@ -424,6 +424,7 @@ def run_full_analysis(
 
         # Issue #373: Trading day filter (per-stock, per-market)
         effective_codes = stock_codes if stock_codes is not None else config.stock_list
+        logger.info(f"读取到的原始股票列表 (前10个): {effective_codes[:10]}")
         
         # Advisor 注入：在 GitHub Actions 环境中强制启用 force_run
         if os.getenv("GITHUB_ACTIONS") == "true":
@@ -434,7 +435,7 @@ def run_full_analysis(
             config, args, effective_codes
         )
         logger.info(f"过滤后待分析股票数量: {len(filtered_codes)}")
-        if should_skip:
+        logger.info(f"剩余股票代码: {filtered_codes}")
             logger.info(
                 "今日所有相关市场均为非交易日，跳过执行。可使用 --force-run 强制执行。"
             )
