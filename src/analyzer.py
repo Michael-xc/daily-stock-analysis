@@ -16,39 +16,49 @@ import math
 import time
 from dataclasses import dataclass
 from typing import Optional, Dict, Any, List, Tuple, Callable
-
 import requests
 import os
-import json
 
 def get_analysis_response(prompt: str, system_prompt: str) -> str:
-    \"\"\"直接调用 SiliconCloud API，绕过 LiteLLM\"\"\"
-    api_key = os.getenv(\"DEEPSEEK_API_KEY\")
-    base_url = os.getenv(\"OPENAI_BASE_URL\", \"https://api.siliconflow.cn/v1/\").rstrip(\"/\")
-    model = \"deepseek-chat\"
+    """直接调用 SiliconCloud API，绕过 LiteLLM"""
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    base_url = os.getenv("OPENAI_BASE_URL", "https://api.siliconflow.cn/v1/").rstrip("/")
+    model = "deepseek-chat"
     
-    url = f\"{base_url}/chat/completions\"
+    url = f"{base_url}/chat/completions"
     headers = {
-        \"Authorization\": f\"Bearer {api_key}\",
-        \"Content-Type\": \"application/json\"
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
     }
     payload = {
-        \"model\": model,
-        \"messages\": [
-            {\"role\": \"system\", \"content\": system_prompt},
-            {\"role\": \"user\", \"content\": prompt}
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
         ],
-        \"temperature\": 0.7
+        "temperature": 0.7
     }
     
-    response = requests.post(url, headers=headers, json=payload, timeout=60)
-    response.raise_for_status()
-    return response.json()[\"choices\"][0][\"message\"][\"content\"]
+    logger.info(f"正在请求 AI 分析，模型: {model}, URL: {url}")
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=60)
+        # 强制打印调试信息
+        logger.info(f"响应状态: {response.status_code}")
+        if response.status_code != 200:
+             logger.error(f"响应内容: {response.text}")
+        response.raise_for_status()
+        
+        result = response.json()
+        content = result["choices"][0]["message"]["content"]
+        logger.info("AI 分析响应获取成功")
+        return content
+    except Exception as e:
+        logger.error(f"API 调用发生异常: {str(e)}")
+        raise e
 
 from src.agent.skills.defaults import CORE_TRADING_SKILL_POLICY_ZH
 from src.config import (
     Config,
-    extra_litellm_params,
     get_api_keys_for_model,
     get_config,
     get_configured_llm_models,
